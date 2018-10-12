@@ -19,6 +19,7 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableStringConverter;
 
 @SuppressWarnings("serial")
 public class Frame extends JFrame{
@@ -53,11 +54,6 @@ public class Frame extends JFrame{
 		//separating button and first table
 		contentPane.add(Box.createRigidArea(new Dimension(40,40)));
 		
-		//variables for table modeling
-		Vector<String> COLUMN_NAME_VECTOR = new Vector<String>(
-		         Arrays.asList(new String[] {"--","A", "B","C","D","E","F",}));
-		DefaultTableModel model = new DefaultTableModel(getTableBaseMatrix(), COLUMN_NAME_VECTOR);
-		
 		//table modeling - with all elements
 		JLabel table1Title = new JLabel("Tabela com todos os elementos");
 		table1Title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -65,7 +61,7 @@ public class Frame extends JFrame{
 		contentPane.add(table1Title);
 		
 		JTable tableNotSorted = new JTable();
-		tableNotSorted.setModel(model);
+		tableNotSorted.setModel(getTableModel());
 		contentPane.add(tableNotSorted);
 		
 		//separating talbe1 and table2
@@ -78,15 +74,17 @@ public class Frame extends JFrame{
 		contentPane.add(table2Title);
 		
 		JTable tableSorted = new JTable();;
-		tableSorted.setModel(model);
+		tableSorted.setModel(getTableModel());
 		contentPane.add(tableSorted);
 		
 		//button listener
 		btnShow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				ArrayList<Class> randomClasses = new ArrayList<>();
-				randomClasses = Class.getRandomClasses();
+				revertToModel(tableSorted, getTableModel());
+				revertToModel(tableNotSorted, getTableModel());
+				
+				ArrayList<Class> randomClasses = Class.getRandomClasses();
 				
 				showRandomData(tableNotSorted, randomClasses);
 				showRandomData(tableSorted, Class.getSortedClasses(randomClasses));
@@ -94,6 +92,24 @@ public class Frame extends JFrame{
 			}
 		});
 
+	}
+	
+	private DefaultTableModel getTableModel() {
+		Vector<String> COLUMN_NAME_VECTOR = new Vector<String>(
+				Arrays.asList(new String[] {"--","A", "B","C","D","E","F",})
+		);
+	
+		return new DefaultTableModel(getTableBaseMatrix(), COLUMN_NAME_VECTOR);
+	}
+	
+	private void revertToModel(JTable table, DefaultTableModel model) {
+		
+		for (int i = 0; i < model.getRowCount(); i++) {
+			for (int j = 0; j < model.getColumnCount(); j++) {
+				
+				table.setValueAt(model.getValueAt(i, j), i, j);
+			}
+		}
 	}
 	
 	private Vector<Vector<String>> getTableBaseMatrix() {
@@ -166,13 +182,19 @@ public class Frame extends JFrame{
 		for(int i = 0; i < classes.size(); i++) {
 			
 			for(int j = 1; j <= classes.get(i).duration; j++) {
+				
 				int row = classes.get(i).startTime - 8 + j;
 				int column = classes.get(i).dayOfTheWeek;
-				table.setValueAt(
-						table.getValueAt(row, column) + " / " + classes.get(i).name, 
-						row,
-						column
-				);
+				
+				String text = table.getValueAt(row, column).toString();
+				
+				if (text == " ") {
+					text = classes.get(i).name;
+				} else {
+					text += " / " + classes.get(i).name;
+				}
+				
+				table.setValueAt(text, row, column);
 			}
 		
 		}
